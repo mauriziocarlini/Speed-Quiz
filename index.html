@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Meta Speed Quiz</title>
+    <script>
+      try {
+        const theme = localStorage.getItem("speedQuizTheme");
+        if (theme) document.documentElement.dataset.theme = theme;
+      } catch {}
+    </script>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="settings-panel" aria-label="Quiz settings">
+        <div class="settings-head">
+          <div>
+            <h1 id="app-title">Speed Quiz</h1>
+          </div>
+          <div class="settings-actions">
+            <label class="theme-switch" for="theme-toggle">
+              <span id="theme-label">Dark</span>
+              <input id="theme-toggle" type="checkbox" aria-label="Use light mode" />
+              <span class="theme-slider" aria-hidden="true"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="mode-row">
+          <label>
+            <input type="radio" name="quiz-mode" value="top" checked />
+            <span>Top usage</span>
+          </label>
+          <label>
+            <input type="radio" name="quiz-mode" value="all" />
+            <span>All</span>
+          </label>
+          <label>
+            <input type="radio" name="quiz-mode" value="custom" />
+            <span>Custom</span>
+          </label>
+        </div>
+
+        <div id="top-settings" class="settings-row">
+          <label for="top-limit">Size</label>
+          <select id="top-limit">
+            <option value="10" selected>Top 10</option>
+            <option value="20">Top 20</option>
+            <option value="30">Top 30</option>
+          </select>
+          <span class="settings-hint">Includes Mega forms; they do not count toward the selected range.</span>
+        </div>
+
+        <div id="custom-settings" class="custom-settings" hidden>
+          <div class="settings-row">
+            <label for="custom-pool-select">List</label>
+            <select id="custom-pool-select"></select>
+            <button id="new-custom-button" type="button">New list</button>
+            <button id="delete-custom-button" type="button">Delete</button>
+            <button id="export-custom-button" type="button">Export JSON</button>
+            <button id="import-custom-button" type="button">Import JSON</button>
+            <input id="import-custom-file" class="visually-hidden" type="file" accept="application/json,.json" />
+          </div>
+          <p id="custom-empty" class="empty-note" hidden>
+            Create or import a custom list and choose only the Pokémon you want to drill.
+          </p>
+          <details id="custom-editor" class="custom-editor">
+            <summary>Edit list</summary>
+            <div class="settings-row">
+              <input id="custom-name" type="text" placeholder="List name" />
+              <input id="custom-search" type="search" placeholder="Search Pokémon" />
+            </div>
+            <p id="custom-count" class="mini-note">0 selected</p>
+            <div id="custom-grid" class="custom-grid"></div>
+            <div class="compact-actions">
+              <button id="save-custom-button" type="button">Save list</button>
+              <button id="clear-custom-button" type="button">Clear</button>
+            </div>
+          </details>
+        </div>
+        <div class="option-toggles" aria-label="Advanced quiz options">
+          <label class="toggle-row">
+            <input id="full-sp-toggle" type="checkbox" />
+            <span>SP variance</span>
+          </label>
+          <label class="toggle-row">
+            <input id="nature-plus-toggle" type="checkbox" />
+            <span>Nature +</span>
+          </label>
+          <label class="toggle-row">
+            <input id="nature-minus-toggle" type="checkbox" />
+            <span>Nature -</span>
+          </label>
+          <label class="toggle-row">
+            <input id="modifiers-toggle" type="checkbox" />
+            <span>Stat stages</span>
+          </label>
+          <button id="reset-button" class="restart-button" type="button">Restart</button>
+        </div>
+      </section>
+
+      <section class="quiz-panel" aria-labelledby="app-title">
+        <div class="quiz-grid">
+          <div id="quiz-empty-state" class="quiz-empty-state" hidden>
+            Choose another pool or create/import a custom list.
+          </div>
+          <header class="quiz-card-head">
+            <div>
+              <p id="rank-label" class="rank-label"></p>
+              <h2 id="pokemon-name"></h2>
+            </div>
+            <dl class="scoreboard">
+              <div>
+                <dt>Score</dt>
+                <dd id="score-value">0 / 0</dd>
+              </div>
+              <div>
+                <dt>Streak</dt>
+                <dd id="streak-value">0</dd>
+              </div>
+              <div>
+                <dt>Left</dt>
+                <dd id="remaining-value">43</dd>
+              </div>
+            </dl>
+          </header>
+          <section class="current-pokemon" aria-live="polite">
+            <div class="main-card">
+              <div class="pokemon-side">
+                <img id="pokemon-art" src="" alt="" />
+                <p id="session-summary" class="session-summary" hidden></p>
+                <button id="create-review-list-button" class="review-inline-button" type="button" hidden>
+                  Create review list from misses
+                </button>
+              </div>
+
+              <div class="answer-side">
+                <form id="quiz-form" class="answer-form">
+                  <label for="speed-answer">Speed</label>
+                  <div class="answer-row">
+                    <input
+                      id="speed-answer"
+                      type="number"
+                      inputmode="numeric"
+                      min="1"
+                      max="255"
+                      autocomplete="off"
+                      required
+                    />
+                    <button type="submit">Check</button>
+                  </div>
+                </form>
+
+                <div id="feedback" class="feedback" role="status"></div>
+
+                <div class="controls">
+                  <button id="hint-button" type="button">Hint</button>
+                  <button id="skip-button" type="button">Skip</button>
+                </div>
+              </div>
+
+              <div id="variant-badges" class="variant-badges"></div>
+
+              <div class="hint-row">
+                <div id="slower-hint" class="hint-card" hidden></div>
+                <div id="faster-hint" class="hint-card" hidden></div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <details id="tiers-section" class="tiers-section">
+        <summary class="tiers-toggle" aria-controls="tiers-list">
+          <span>
+            <h2 id="tiers-title">Speed tiers</h2>
+          </span>
+          <span class="tiers-switch" aria-hidden="true">
+            <span id="tiers-toggle-label">Show</span>
+            <span class="theme-slider"></span>
+          </span>
+        </summary>
+        <div id="tiers-list" class="tiers-list"></div>
+      </details>
+    </main>
+
+    <script src="champions-data.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
