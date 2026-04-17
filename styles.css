@@ -22,6 +22,9 @@
   --info-ink: #8bd2eb;
   --danger-bg: #341c1b;
   --danger-line: #89413b;
+  --delete-bg: #ff8a80;
+  --delete-hover: #ffb0a8;
+  --delete-ink: #1b0807;
   --button-bg: #edf7f0;
   --button-fg: #101713;
   --button-hover: #67d391;
@@ -54,6 +57,9 @@ html[data-theme="light"] {
   --info-ink: #236884;
   --danger-bg: #fdecea;
   --danger-line: #e5b1ab;
+  --delete-bg: #a3261f;
+  --delete-hover: #7f1d18;
+  --delete-ink: #ffffff;
   --button-bg: #142018;
   --button-fg: #ffffff;
   --button-hover: #167a45;
@@ -666,7 +672,8 @@ textarea:focus {
   color: var(--danger-ink);
 }
 
-.quiz-empty-state {
+.quiz-empty-state,
+.session-complete-state {
   align-content: center;
   background: var(--surface-muted);
   border: 1px dashed var(--line);
@@ -680,11 +687,17 @@ textarea:focus {
   text-align: center;
 }
 
+.session-complete-state {
+  border-style: solid;
+  justify-items: center;
+}
+
 .session-summary {
-  color: var(--muted);
-  font-weight: 800;
+  color: var(--ink);
+  font-size: clamp(1.25rem, 3vw, 1.75rem);
+  font-weight: 900;
   line-height: 1.45;
-  margin: 0.4rem 0 0;
+  margin: 0;
 }
 
 .review-inline-button {
@@ -728,6 +741,17 @@ textarea:focus {
 
 .restart-button:hover {
   background: color-mix(in srgb, var(--coral) 18%, var(--danger-bg));
+}
+
+.settings-row .delete-button {
+  background: var(--delete-bg);
+  border-color: var(--delete-bg);
+  color: var(--delete-ink);
+}
+
+.settings-row .delete-button:hover {
+  background: var(--delete-hover);
+  border-color: var(--delete-hover);
 }
 
 .toggle-row input {

@@ -58,9 +58,9 @@
             <label for="custom-pool-select">List</label>
             <select id="custom-pool-select"></select>
             <button id="new-custom-button" type="button">New list</button>
-            <button id="delete-custom-button" type="button">Delete</button>
-            <button id="export-custom-button" type="button">Export JSON</button>
-            <button id="import-custom-button" type="button">Import JSON</button>
+            <button id="export-custom-button" type="button">Export</button>
+            <button id="import-custom-button" type="button">Import</button>
+            <button id="delete-custom-button" class="delete-button" type="button">Delete</button>
             <input id="import-custom-file" class="visually-hidden" type="file" accept="application/json,.json" />
           </div>
           <p id="custom-empty" class="empty-note" hidden>
@@ -106,6 +106,12 @@
           <div id="quiz-empty-state" class="quiz-empty-state" hidden>
             Choose another pool or create/import a custom list.
           </div>
+          <div id="session-complete-state" class="session-complete-state" hidden>
+            <p id="session-summary" class="session-summary"></p>
+            <button id="create-review-list-button" class="review-inline-button" type="button" hidden>
+              Create review list from misses
+            </button>
+          </div>
           <header class="quiz-card-head">
             <div>
               <p id="rank-label" class="rank-label"></p>
@@ -130,10 +136,6 @@
             <div class="main-card">
               <div class="pokemon-side">
                 <img id="pokemon-art" src="" alt="" />
-                <p id="session-summary" class="session-summary" hidden></p>
-                <button id="create-review-list-button" class="review-inline-button" type="button" hidden>
-                  Create review list from misses
-                </button>
               </div>
 
               <div class="answer-side">

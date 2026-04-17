@@ -98,6 +98,7 @@ const form = document.querySelector("#quiz-form");
 const answer = document.querySelector("#speed-answer");
 const feedback = document.querySelector("#feedback");
 const quizEmptyState = document.querySelector("#quiz-empty-state");
+const sessionCompleteState = document.querySelector("#session-complete-state");
 const quizCardHead = document.querySelector(".quiz-card-head");
 const currentPokemon = document.querySelector(".current-pokemon");
 const sessionSummary = document.querySelector("#session-summary");
@@ -400,7 +401,8 @@ function nextQuestion() {
     variantBadges.innerHTML = "";
     feedback.textContent = "";
     feedback.className = "feedback";
-    renderEmptyState(currentPool.length === 0);
+    if (currentPool.length) renderCompleteState();
+    else renderEmptyState(true);
     renderSessionSummary();
     answer.value = "";
     answer.disabled = true;
@@ -411,7 +413,7 @@ function nextQuestion() {
   }
 
   hideHint();
-  renderEmptyState(false);
+  renderActiveQuizState();
   art.hidden = false;
   art.src = pokemonArt(current.mon);
   art.dataset.pokeapiId = current.mon.pokeapiId;
@@ -479,8 +481,25 @@ function updateScore() {
 
 function renderEmptyState(isEmpty) {
   quizEmptyState.hidden = !isEmpty;
-  quizCardHead.hidden = isEmpty;
-  currentPokemon.hidden = isEmpty;
+  if (isEmpty) {
+    sessionCompleteState.hidden = true;
+    quizCardHead.hidden = true;
+    currentPokemon.hidden = true;
+  }
+}
+
+function renderActiveQuizState() {
+  quizEmptyState.hidden = true;
+  sessionCompleteState.hidden = true;
+  quizCardHead.hidden = false;
+  currentPokemon.hidden = false;
+}
+
+function renderCompleteState() {
+  quizEmptyState.hidden = true;
+  sessionCompleteState.hidden = false;
+  quizCardHead.hidden = true;
+  currentPokemon.hidden = true;
 }
 
 function answerText(guess, target) {
