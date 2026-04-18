@@ -907,6 +907,32 @@ textarea:focus {
   background: var(--tick-color);
 }
 
+.site-footer {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 650;
+  line-height: 1.55;
+  margin: 2rem auto 0;
+  max-width: 46rem;
+  opacity: 0.78;
+  text-align: center;
+}
+
+.site-footer p {
+  margin: 0;
+}
+
+.site-footer a {
+  color: var(--muted);
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 0.16em;
+}
+
+.site-footer a:hover {
+  color: var(--leaf);
+}
+
 @media (max-width: 780px) {
   .app-shell {
     width: min(100% - 1rem, 38rem);
