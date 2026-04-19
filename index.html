@@ -31,7 +31,7 @@
         <div class="mode-row">
           <label>
             <input type="radio" name="quiz-mode" value="top" checked />
-            <span>Top usage</span>
+            <span>Most used</span>
           </label>
           <label>
             <input type="radio" name="quiz-mode" value="all" />
@@ -54,7 +54,7 @@
         </div>
 
         <div id="custom-settings" class="custom-settings" hidden>
-          <div class="settings-row">
+          <div class="settings-row custom-list-row">
             <label for="custom-pool-select">List</label>
             <select id="custom-pool-select"></select>
             <button id="new-custom-button" type="button">New list</button>
@@ -83,21 +83,20 @@
         <div class="option-toggles" aria-label="Advanced quiz options">
           <label class="toggle-row">
             <input id="full-sp-toggle" type="checkbox" />
-            <span>SP variance</span>
+            <span>Max SP</span>
           </label>
           <label class="toggle-row">
             <input id="nature-plus-toggle" type="checkbox" />
             <span>Nature +</span>
           </label>
-          <label class="toggle-row">
+          <label class="toggle-row" hidden>
             <input id="nature-minus-toggle" type="checkbox" />
             <span>Nature -</span>
           </label>
-          <label class="toggle-row">
+          <label class="toggle-row" hidden>
             <input id="modifiers-toggle" type="checkbox" />
             <span>Stat stages</span>
           </label>
-          <button id="reset-button" class="restart-button" type="button">Restart</button>
         </div>
       </section>
 
@@ -160,6 +159,7 @@
                 <div class="controls">
                   <button id="hint-button" type="button">Hint</button>
                   <button id="skip-button" type="button">Skip</button>
+                  <button id="reset-button" class="restart-button" type="button">Restart</button>
                 </div>
               </div>
 
@@ -193,7 +193,7 @@
           <a href="https://www.pikalytics.com/speed-quiz" target="_blank" rel="noopener noreferrer">Pikalytics</a>.
           Data and artwork are fetched from
           <a href="https://pokeapi.co/" target="_blank" rel="noopener noreferrer">PokeAPI</a>.
-          Top usage data is manually extracted from Pokemon Champions Battle Data.
+          Most used data is manually extracted from Pokemon Champions Battle Data.
         </p>
       </footer>
     </main>

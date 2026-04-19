@@ -175,25 +175,32 @@ function pokemonArt(mon) {
   return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${mon.pokeapiId}.png`;
 }
 
+function effectiveSp(entry) {
+  return fullSpToggle.checked ? 32 : entry.sp;
+}
+
+function effectiveNature(entry) {
+  if (naturePlusToggle.checked) return 1.1;
+  if (natureMinusToggle.checked) return 0.9;
+  return entry.nature;
+}
+
 function variantSpeed(entry) {
-  const neutral = championsSpeed(entry.mon) + entry.sp;
-  const spreadAdjusted = Math.floor(neutral * entry.nature);
+  const neutral = championsSpeed(entry.mon) + effectiveSp(entry);
+  const spreadAdjusted = Math.floor(neutral * effectiveNature(entry));
   return applyStage(spreadAdjusted, entry.stage);
 }
 
-function randomSp() {
-  return fullSpToggle.checked && Math.random() < 0.5 ? 32 : 0;
+function currentVariantOptions() {
+  return {
+    sp: fullSpToggle.checked ? 32 : 0,
+    nature: naturePlusToggle.checked ? 1.1 : natureMinusToggle.checked ? 0.9 : 1,
+    stages: modifiersToggle.checked,
+  };
 }
 
-function randomNature() {
-  const options = [1];
-  if (naturePlusToggle.checked) options.push(1.1);
-  if (natureMinusToggle.checked) options.push(0.9);
-  return options[Math.floor(Math.random() * options.length)];
-}
-
-function randomStage() {
-  if (!modifiersToggle.checked) return 0;
+function randomStage(stagesEnabled) {
+  if (!stagesEnabled) return 0;
   const total = MODIFIER_STAGE_WEIGHTS.reduce((sum, item) => sum + item.weight, 0);
   let roll = Math.random() * total;
 
@@ -364,11 +371,12 @@ function withLinkedMegas(list) {
 
 function resetQuiz() {
   currentPool = poolForSettings();
+  const variantOptions = currentVariantOptions();
   sessionEntries = currentPool.map((mon) => ({
     mon,
-    sp: randomSp(),
-    nature: randomNature(),
-    stage: randomStage(),
+    sp: variantOptions.sp,
+    nature: variantOptions.nature,
+    stage: randomStage(variantOptions.stages),
   }));
   queue = shuffle(sessionEntries);
   correct = 0;
@@ -446,16 +454,18 @@ function advancedOptionsActive() {
 
 function renderVariantBadges(entry) {
   const badges = [];
+  const sp = effectiveSp(entry);
+  const nature = effectiveNature(entry);
 
-  if (entry.sp > 0) {
+  if (sp > 0) {
     badges.push(`<span class="variant-badge">Max SP <strong>+32</strong></span>`);
   }
 
-  if (entry.nature !== 1) {
-    const isPositive = entry.nature > 1;
+  if (nature !== 1) {
+    const isPositive = nature > 1;
     badges.push(
       `<span class="variant-badge nature-${isPositive ? "up" : "down"}">
-        Nature ${isPositive ? "▲" : "▼"} <strong>×${entry.nature}</strong>
+        Nature ${isPositive ? "▲" : "▼"} <strong>×${nature}</strong>
       </span>`,
     );
   }
@@ -857,8 +867,10 @@ function initSettings() {
   topLimit.value = localStorage.getItem(STORAGE_KEYS.topLimit) ?? "10";
   fullSpToggle.checked = localStorage.getItem(STORAGE_KEYS.fullSp) === "true";
   naturePlusToggle.checked = localStorage.getItem(STORAGE_KEYS.naturePlus) === "true";
-  natureMinusToggle.checked = localStorage.getItem(STORAGE_KEYS.natureMinus) === "true";
-  modifiersToggle.checked = localStorage.getItem(STORAGE_KEYS.modifiers) === "true";
+  natureMinusToggle.checked = false;
+  localStorage.setItem(STORAGE_KEYS.natureMinus, "false");
+  modifiersToggle.checked = false;
+  localStorage.setItem(STORAGE_KEYS.modifiers, "false");
   renderCustomSelect();
   applySettingsVisibility();
 }

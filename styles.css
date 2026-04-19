@@ -320,6 +320,11 @@ textarea {
   gap: 0.75rem;
 }
 
+.custom-list-row button {
+  min-height: 2.35rem;
+  padding: 0.45rem 0.6rem;
+}
+
 .custom-editor input[type="text"],
 .custom-editor input[type="search"] {
   flex: 1 1 12rem;
@@ -418,6 +423,10 @@ textarea {
   display: grid;
   gap: 0.75rem;
   grid-template-columns: minmax(0, 1fr) auto;
+  min-width: 0;
+}
+
+.quiz-card-head > div {
   min-width: 0;
 }
 
@@ -708,15 +717,14 @@ textarea:focus {
 .controls {
   display: grid;
   gap: 0.55rem;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .option-toggles {
   align-items: center;
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.65rem;
-  width: 100%;
+  flex-wrap: nowrap;
+  gap: 0.35rem;
 }
 
 .toggle-row {
@@ -724,11 +732,16 @@ textarea:focus {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 8px;
+  color: var(--muted);
+  cursor: pointer;
+  flex: 0 0 auto;
   display: inline-flex;
-  gap: 0.5rem;
+  gap: 0.35rem;
+  justify-content: center;
   justify-self: start;
-  min-height: 2.6rem;
-  padding: 0.45rem 0.7rem;
+  min-height: 2.25rem;
+  min-width: 0;
+  padding: 0.35rem 0.75rem;
 }
 
 .restart-button {
@@ -755,11 +768,23 @@ textarea:focus {
 }
 
 .toggle-row input {
-  accent-color: var(--leaf);
+  inline-size: 1px;
+  opacity: 0;
+  position: absolute;
 }
 
 .toggle-row span {
+  font-size: 0.95rem;
   font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toggle-row:has(input:checked) {
+  background: color-mix(in srgb, var(--leaf) 18%, var(--surface));
+  border-color: var(--leaf);
+  color: var(--ink);
 }
 
 .scoreboard {
@@ -912,7 +937,7 @@ textarea:focus {
   font-size: 0.76rem;
   font-weight: 650;
   line-height: 1.55;
-  margin: 1rem auto 0;
+  margin: 2rem auto 0;
   max-width: 46rem;
   opacity: 0.78;
   text-align: center;
@@ -957,6 +982,24 @@ textarea:focus {
     width: 100%;
   }
 
+  .custom-list-row {
+    display: grid;
+    gap: 0.4rem;
+    grid-template-columns: 1fr repeat(4, minmax(0, 1fr));
+  }
+
+  .custom-list-row label,
+  .custom-list-row select {
+    grid-column: 1 / -1;
+  }
+
+  .custom-list-row button {
+    font-size: 0.68rem;
+    min-height: 2.25rem;
+    padding: 0.35rem 0.2rem;
+    width: 100%;
+  }
+
   .custom-editor input[type="text"],
   .custom-editor input[type="search"] {
     flex: 0 0 auto;
@@ -972,11 +1015,27 @@ textarea:focus {
   }
 
   .quiz-card-head {
-    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 
   .scoreboard {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.25rem;
+    grid-template-columns: repeat(3, auto);
+  }
+
+  .scoreboard div {
+    min-width: 2.65rem;
+    padding: 0.25rem 0.3rem;
+  }
+
+  .scoreboard dt {
+    font-size: 0.5rem;
+  }
+
+  .scoreboard dd {
+    font-size: 0.76rem;
+    margin-top: 0;
   }
 
   .pokemon-side img {
@@ -985,15 +1044,46 @@ textarea:focus {
   }
 
   .hint-row {
-    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hint-card {
+    min-height: 7.25rem;
+    padding: 0.55rem;
+  }
+
+  .hint-card img {
+    width: min(100%, 3.8rem);
+  }
+
+  .hint-name {
+    font-size: 0.82rem;
+  }
+
+  .hint-speed {
+    font-size: 1rem;
   }
 
   .answer-side {
     gap: 0.55rem;
   }
 
+  .option-toggles {
+    gap: 0.25rem;
+  }
+
+  .toggle-row {
+    gap: 0;
+    padding: 0.3rem 0.65rem;
+  }
+
+  .toggle-row span {
+    font-size: 0.9rem;
+  }
+
   .controls {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
   }
 
   .tier-row {
