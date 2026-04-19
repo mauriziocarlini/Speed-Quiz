@@ -96,6 +96,7 @@ const pokemonName = document.querySelector("#pokemon-name");
 const variantBadges = document.querySelector("#variant-badges");
 const form = document.querySelector("#quiz-form");
 const answer = document.querySelector("#speed-answer");
+const submitButton = form.querySelector('button[type="submit"]');
 const feedback = document.querySelector("#feedback");
 const quizEmptyState = document.querySelector("#quiz-empty-state");
 const sessionCompleteState = document.querySelector("#session-complete-state");
@@ -130,7 +131,6 @@ const deleteCustomButton = document.querySelector("#delete-custom-button");
 const exportCustomButton = document.querySelector("#export-custom-button");
 const importCustomButton = document.querySelector("#import-custom-button");
 const importCustomFile = document.querySelector("#import-custom-file");
-const customEmpty = document.querySelector("#custom-empty");
 const customEditor = document.querySelector("#custom-editor");
 const customName = document.querySelector("#custom-name");
 const customSearch = document.querySelector("#custom-search");
@@ -159,6 +159,7 @@ let sessionEntries = [];
 let correct = 0;
 let attempts = 0;
 let streak = 0;
+let awaitingNext = false;
 let customDraft = new Set();
 let missedIds = new Set();
 let usageRankingIds = [];
@@ -185,10 +186,19 @@ function effectiveNature(entry) {
   return entry.nature;
 }
 
+function speedBreakdown(entry) {
+  const base = championsSpeed(entry.mon);
+  const sp = effectiveSp(entry);
+  const nature = effectiveNature(entry);
+  const neutral = base + sp;
+  const spreadAdjusted = Math.floor(neutral * nature);
+  const final = applyStage(spreadAdjusted, entry.stage);
+
+  return { base, final, nature, sp };
+}
+
 function variantSpeed(entry) {
-  const neutral = championsSpeed(entry.mon) + effectiveSp(entry);
-  const spreadAdjusted = Math.floor(neutral * effectiveNature(entry));
-  return applyStage(spreadAdjusted, entry.stage);
+  return speedBreakdown(entry).final;
 }
 
 function currentVariantOptions() {
@@ -298,6 +308,10 @@ function uniqueKnownIds(ids) {
   });
 }
 
+function uniqueSelectableIds(ids) {
+  return uniqueKnownIds(ids).filter((id) => !isMegaId(id));
+}
+
 function safeFileName(value) {
   return (
     normalize(value)
@@ -333,13 +347,12 @@ function poolForSettings() {
   if (mode === "custom") {
     const activeId = customPoolSelect.value;
     const active = getCustomPools().find((pool) => pool.id === activeId);
-    selected = active ? active.ids.map((id) => byId.get(id)).filter(Boolean) : [];
+    selected = active ? uniqueSelectableIds(active.ids).map((id) => byId.get(id)).filter(Boolean) : [];
   }
 
   if (mode === "top") {
     selected = getUsageRanking()
       .filter((id) => !isMegaId(id))
-      .slice(0, Number(topLimit.value))
       .map((id) => byId.get(id))
       .filter(Boolean);
   }
@@ -382,6 +395,7 @@ function resetQuiz() {
   correct = 0;
   attempts = 0;
   streak = 0;
+  awaitingNext = false;
   missedIds = new Set();
   feedback.textContent = "";
   feedback.className = "feedback";
@@ -395,6 +409,8 @@ function resetQuiz() {
 }
 
 function nextQuestion() {
+  awaitingNext = false;
+  submitButton.textContent = "Check";
   current = queue.shift() ?? null;
 
   if (!current) {
@@ -415,6 +431,7 @@ function nextQuestion() {
     answer.value = "";
     answer.disabled = true;
     hintButton.disabled = true;
+    skipButton.disabled = true;
     hideHint();
     updateScore();
     return;
@@ -433,11 +450,11 @@ function nextQuestion() {
   sessionSummary.hidden = true;
   sessionSummary.textContent = "";
   createReviewListButton.hidden = true;
-  feedback.textContent = "";
-  feedback.className = "feedback";
-  renderVariantBadges(current);
+  renderFeedbackPreview(current);
+  variantBadges.innerHTML = "";
   answer.disabled = false;
   hintButton.disabled = advancedOptionsActive();
+  skipButton.disabled = false;
   answer.value = "";
   answer.focus();
   updateScore();
@@ -458,14 +475,14 @@ function renderVariantBadges(entry) {
   const nature = effectiveNature(entry);
 
   if (sp > 0) {
-    badges.push(`<span class="variant-badge">Max SP <strong>+32</strong></span>`);
+    badges.push(`<span class="variant-badge">Max SP</span>`);
   }
 
   if (nature !== 1) {
     const isPositive = nature > 1;
     badges.push(
       `<span class="variant-badge nature-${isPositive ? "up" : "down"}">
-        Nature ${isPositive ? "▲" : "▼"} <strong>×${nature}</strong>
+        Nature ${isPositive ? "↑" : "↓"}
       </span>`,
     );
   }
@@ -512,16 +529,94 @@ function renderCompleteState() {
   currentPokemon.hidden = true;
 }
 
-function answerText(guess, target) {
-  const delta = Math.abs(guess - target);
-  if (delta === 0) return `Correct: ${target}.`;
-  if (delta <= 5) return `Close: ${target}.`;
-  return `${target}.`;
+function feedbackChip(label, type = "modifier") {
+  return `<span class="feedback-chip feedback-chip-${type}">${label}</span>`;
+}
+
+function feedbackOperator(label) {
+  return `<span class="feedback-operator">${label}</span>`;
+}
+
+function feedbackOutcomeIcon(isCorrect) {
+  const path = isCorrect ? "m4.5 12.75 6 6 9-13.5" : "M6 18 18 6M6 6l12 12";
+  return `
+    <svg class="feedback-icon" aria-hidden="true" viewBox="0 0 24 24">
+      <path d="${path}" />
+    </svg>
+  `;
+}
+
+function activeModifierMarkup(entry) {
+  const { nature, sp } = speedBreakdown(entry);
+  const parts = [];
+
+  if (sp !== 0) {
+    parts.push(feedbackChip("Max SP"));
+  }
+
+  if (nature !== 1) {
+    parts.push(feedbackChip(`Nature ${nature > 1 ? "↑" : "↓"}`));
+  }
+
+  if (entry.stage !== 0) {
+    parts.push(feedbackChip(stageFormula(entry.stage)));
+  }
+
+  return parts.join("");
+}
+
+function renderFeedbackPreview(entry) {
+  const modifiers = activeModifierMarkup(entry);
+  feedback.innerHTML = modifiers ? `<span class="feedback-formula">${modifiers}</span>` : "";
+  feedback.className = "feedback";
+}
+
+function speedAnswerMarkup(entry) {
+  const { base, final, nature, sp } = speedBreakdown(entry);
+  const hasSp = sp !== 0;
+  const hasNature = nature !== 1;
+  const hasStage = entry.stage !== 0;
+
+  if (!hasSp && !hasNature && !hasStage) {
+    return feedbackChip(final, "result");
+  }
+
+  const groupedSpread = hasSp && hasNature;
+  const parts = [feedbackChip(final, "result"), feedbackOperator("=")];
+
+  if (groupedSpread) parts.push(feedbackOperator("("));
+
+  parts.push(feedbackChip(base, "base"));
+
+  if (hasSp) {
+    parts.push(feedbackOperator("+"));
+    parts.push(feedbackChip("Max SP"));
+  }
+
+  if (groupedSpread) parts.push(feedbackOperator(")"));
+
+  if (hasNature) {
+    const isPositive = nature > 1;
+    parts.push(feedbackOperator("×"));
+    parts.push(feedbackChip(`Nature ${isPositive ? "↑" : "↓"}`));
+  }
+
+  if (hasStage) {
+    parts.push(feedbackOperator("×"));
+    parts.push(feedbackChip(stageFormula(entry.stage)));
+  }
+
+  return parts.join("");
 }
 
 function submitAnswer(event) {
   event.preventDefault();
   if (!current) return;
+
+  if (awaitingNext) {
+    nextQuestion();
+    return;
+  }
 
   const guess = Number(answer.value);
   const target = variantSpeed(current);
@@ -531,22 +626,35 @@ function submitAnswer(event) {
   correct += isCorrect ? 1 : 0;
   if (!isCorrect) missedIds.add(current.mon.id);
   streak = isCorrect ? streak + 1 : 0;
-  feedback.textContent = answerText(guess, target);
+  feedback.innerHTML = `
+    <span class="feedback-formula">${speedAnswerMarkup(current)}</span>
+    ${feedbackOutcomeIcon(isCorrect)}
+  `;
   feedback.className = `feedback ${isCorrect ? "is-correct" : "is-wrong"}`;
+  awaitingNext = true;
+  answer.disabled = true;
+  hintButton.disabled = true;
+  skipButton.disabled = true;
+  submitButton.textContent = "Next";
   updateScore();
-
-  window.setTimeout(nextQuestion, isCorrect ? 850 : 1500);
 }
 
 function skipQuestion() {
-  if (!current) return;
+  if (!current || awaitingNext) return;
   attempts += 1;
   missedIds.add(current.mon.id);
   streak = 0;
-  feedback.textContent = `${variantSpeed(current)}.`;
+  feedback.innerHTML = `
+    <span class="feedback-formula">${speedAnswerMarkup(current)}</span>
+    ${feedbackOutcomeIcon(false)}
+  `;
   feedback.className = "feedback is-wrong";
+  awaitingNext = true;
+  answer.disabled = true;
+  hintButton.disabled = true;
+  skipButton.disabled = true;
+  submitButton.textContent = "Next";
   updateScore();
-  window.setTimeout(nextQuestion, 950);
 }
 
 function renderSessionSummary() {
@@ -572,7 +680,7 @@ function createReviewListFromMisses() {
   const pools = getCustomPools();
   const id = `review-${Date.now()}`;
   const name = `Review ${new Date().toLocaleDateString()}`;
-  pools.push({ id, name, ids: [...missedIds] });
+  pools.push({ id, name, ids: uniqueSelectableIds([...missedIds]) });
   setCustomPools(pools);
   localStorage.setItem(STORAGE_KEYS.activeCustom, id);
   renderCustomSelect();
@@ -726,7 +834,6 @@ function renderCustomSelect() {
   deleteCustomButton.disabled = pools.length === 0;
   exportCustomButton.disabled = pools.length === 0;
   customEditor.hidden = pools.length === 0;
-  customEmpty.hidden = pools.length !== 0;
   loadCustomDraft();
 }
 
@@ -737,13 +844,15 @@ function activeCustomPool() {
 function loadCustomDraft() {
   const active = activeCustomPool();
   customName.value = active?.name ?? "";
-  customDraft = new Set(active?.ids ?? []);
+  customDraft = new Set(uniqueSelectableIds(active?.ids ?? []));
   renderCustomGrid();
 }
 
 function renderCustomGrid() {
   const query = normalize(customSearch.value);
-  const visible = pokemon.filter((mon) => !query || normalize(mon.name).includes(query));
+  const visible = pokemon.filter(
+    (mon) => !isMegaId(mon.id) && (!query || normalize(mon.name).includes(query)),
+  );
 
   customGrid.innerHTML = visible
     .map(
@@ -777,7 +886,7 @@ function saveCustomPool() {
   const pools = getCustomPools();
   const activeId = customPoolSelect.value || `custom-${Date.now()}`;
   const name = customName.value.trim() || "Custom";
-  const updated = { id: activeId, name, ids: [...customDraft] };
+  const updated = { id: activeId, name, ids: uniqueSelectableIds([...customDraft]) };
   const index = pools.findIndex((pool) => pool.id === activeId);
 
   if (index >= 0) pools[index] = updated;
@@ -806,7 +915,7 @@ function exportCustomPool() {
 
   const payload = {
     name: customName.value.trim() || active.name || "Custom",
-    ids: uniqueKnownIds([...customDraft]),
+    ids: uniqueSelectableIds([...customDraft]),
   };
   const blob = new Blob([`${JSON.stringify(payload, null, 2)}\n`], {
     type: "application/json",
@@ -827,7 +936,7 @@ function importCustomPoolFromFile(file) {
     try {
       const data = JSON.parse(String(reader.result));
       const name = typeof data.name === "string" && data.name.trim() ? data.name.trim() : "Imported list";
-      const ids = uniqueKnownIds(Array.isArray(data.ids) ? data.ids : []);
+      const ids = uniqueSelectableIds(Array.isArray(data.ids) ? data.ids : []);
 
       if (!ids.length) {
         window.alert("Import failed: no valid Pokémon ids found.");
@@ -855,7 +964,7 @@ function importCustomPoolFromFile(file) {
 
 function applySettingsVisibility() {
   const mode = currentMode();
-  topSettings.hidden = mode !== "top";
+  topSettings.hidden = true;
   customSettings.hidden = mode !== "custom";
 }
 
