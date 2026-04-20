@@ -657,6 +657,30 @@ function skipQuestion() {
   updateScore();
 }
 
+function handleQuizEnter(event) {
+  if (event.key !== "Enter" || event.isComposing || !current) return;
+
+  const target = event.target;
+  const isAnswerInput = target === answer;
+  const isEditableControl =
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    target instanceof HTMLSelectElement ||
+    target instanceof HTMLButtonElement ||
+    target?.isContentEditable;
+
+  if (isEditableControl && !isAnswerInput) return;
+
+  event.preventDefault();
+
+  if (awaitingNext) {
+    nextQuestion();
+    return;
+  }
+
+  form.requestSubmit();
+}
+
 function renderSessionSummary() {
   if (!currentPool.length) {
     sessionSummary.hidden = true;
@@ -985,6 +1009,7 @@ function initSettings() {
 }
 
 form.addEventListener("submit", submitAnswer);
+document.addEventListener("keydown", handleQuizEnter);
 skipButton.addEventListener("click", skipQuestion);
 resetButton.addEventListener("click", resetQuiz);
 hintButton.addEventListener("click", renderHint);
